@@ -5,7 +5,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { CategorySelect } from "@/components/category-select";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { daysIn, fixedFor, isoDate, isPaid, summarize } from "@/lib/budget";
 import { db, type Expense } from "@/lib/db";
@@ -81,11 +81,13 @@ export default function MonthPage() {
       </div>
       {due.length > 0 && (
         <Card size="sm">
-          <CardHeader className="flex-row items-center justify-between">
+          <CardHeader>
             <CardTitle>Upcoming payments</CardTitle>
-            <Button variant="ghost" size="icon" aria-label={unlocked ? "Lock payments" : "Unlock to tick payments"} onClick={() => setUnlocked(!unlocked)}>
-              {unlocked ? <LockOpen className="size-4" /> : <Lock className="size-4" />}
-            </Button>
+            <CardAction>
+              <Button variant="ghost" size="icon" aria-label={unlocked ? "Lock payments" : "Unlock to tick payments"} onClick={() => setUnlocked(!unlocked)}>
+                {unlocked ? <LockOpen className="size-4" /> : <Lock className="size-4" />}
+              </Button>
+            </CardAction>
           </CardHeader>
           <CardContent className="space-y-2">
             {due.map((f) => {
