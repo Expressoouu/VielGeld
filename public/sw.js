@@ -1,5 +1,5 @@
 // Network-first, falling back to cache, so the app works offline after one visit.
-const CACHE = "vielgeld-v1";
+const CACHE = "vielgeld-v2";
 
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(["/", "/plan", "/stats"])));
