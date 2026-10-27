@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardAction, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { daysIn, fixedFor, isoDate, isPaid, summarize } from "@/lib/budget";
-import { db, type Expense } from "@/lib/db";
+import { db, newId, type Expense } from "@/lib/db";
 import { useMonth, useMonthData } from "@/lib/hooks";
 import { fmt, toCents } from "@/lib/money";
 
@@ -22,7 +22,7 @@ export default function MonthPage() {
   const { categories, fixed, expenses, income, carry, paid } = data;
   const s = summarize(month, fixed, expenses, income, new Date(), carry, paid);
   const due = fixedFor(fixed, month).sort((a, b) => a.day - b.day);
-  const name = (id: number) => categories.find((c) => c.id === id)?.name ?? "?";
+  const name = (id: string) => categories.find((c) => c.id === id)?.name ?? "?";
   const today = isoDate(new Date());
   const defaultDate = today.startsWith(month) ? today : `${month}-01`;
 
@@ -33,17 +33,17 @@ export default function MonthPage() {
     const title = String(v.get("title")).trim();
     const amount = toCents(String(v.get("amount")));
     if (!title || !(amount > 0)) return toast.error("Enter a title and an amount above 0");
-    const row = { title, amount, categoryId: Number(v.get("category")), date: String(v.get("date")) };
+    const row = { title, amount, categoryId: String(v.get("category")), date: String(v.get("date")) };
     if (editing) {
       await db.expenses.update(editing.id, row);
       return setEditing(null); // changes the form key, which remounts it empty
     }
-    await db.expenses.add(row);
+    await db.expenses.add({ ...row, id: newId() });
     f.reset();
     (f.elements.namedItem("title") as HTMLInputElement).focus();
   }
 
-  async function togglePaid(id: number, isOn: boolean) {
+  async function togglePaid(id: string, isOn: boolean) {
     const key = `paid:${month}:${id}`;
     await (isOn ? db.settings.delete(key) : db.settings.put({ key, value: "1" }));
     setUnlocked(false);
@@ -56,7 +56,7 @@ export default function MonthPage() {
     const title = String(v.get("title")).trim();
     const amount = toCents(String(v.get("amount")));
     if (!title || !(amount > 0)) return toast.error("Enter a source and an amount above 0");
-    await db.income.add({ title, amount, date: String(v.get("date")) });
+    await db.income.add({ id: newId(), title, amount, date: String(v.get("date")) });
     f.reset();
   }
 
@@ -157,7 +157,7 @@ export default function MonthPage() {
         </CardHeader>
         <CardContent className="space-y-2">
           {[...income]
-            .sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id)
+            .sort((a, b) => b.date.localeCompare(a.date))
             .map((i) => (
               <div key={i.id} className="flex items-center justify-between gap-2">
                 <div className="min-w-0">
@@ -189,7 +189,7 @@ export default function MonthPage() {
         </CardHeader>
         <CardContent className="space-y-2">
           {[...expenses]
-            .sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id)
+            .sort((a, b) => b.date.localeCompare(a.date))
             .map((e) => (
               <div key={e.id} className="flex items-center justify-between gap-2">
                 <div className="min-w-0">

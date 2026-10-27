@@ -19,7 +19,7 @@ export const fixedFor = (fixed: Fixed[], month: string) =>
   fixed.filter((f) => f.from <= month && (!f.until || month <= f.until));
 
 /** A fixed payment counts once its due day has passed (day 31 clamps to month end) or it was ticked off by hand (`manual` = ids). Earlier months are fully paid. */
-export const isPaid = (f: Fixed, month: string, today: Date, manual: Set<number>) => {
+export const isPaid = (f: Fixed, month: string, today: Date, manual: Set<string>) => {
   const now = isoDate(today).slice(0, 7);
   return month < now || manual.has(f.id) || (month === now && Math.min(f.day, daysIn(month)) <= today.getDate());
 };
@@ -44,7 +44,7 @@ export function carryOver(month: string, fixed: Fixed[], expenses: Expense[], in
 }
 
 /** Everything for one month. Pass all fixed payments; the ones active in `month` are picked here. `carry` is from carryOver(). */
-export function summarize(month: string, allFixed: Fixed[], expenses: Expense[], income: Income[], today = new Date(), carry = 0, manual = new Set<number>()) {
+export function summarize(month: string, allFixed: Fixed[], expenses: Expense[], income: Income[], today = new Date(), carry = 0, manual = new Set<string>()) {
   const days = daysIn(month);
   const fixed = fixedFor(allFixed, month);
   const unpaid = fixed.filter((f) => !isPaid(f, month, today, manual));
@@ -54,7 +54,7 @@ export function summarize(month: string, allFixed: Fixed[], expenses: Expense[],
   const incomeTotal = income.reduce((s, i) => s + i.amount, 0);
   const remaining = incomeTotal + carry - fixedTotal - variableTotal;
 
-  const byCat = new Map<number, number>();
+  const byCat = new Map<string, number>();
   for (const x of [...fixed, ...expenses]) byCat.set(x.categoryId, (byCat.get(x.categoryId) ?? 0) + x.amount);
 
   const perDay = Array<number>(days + 1).fill(0);

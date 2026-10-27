@@ -5,11 +5,12 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Backup } from "@/components/backup";
 import { CategorySelect } from "@/components/category-select";
+import { Sync } from "@/components/sync";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { addMonths, fixedFor, isoDate, summarize } from "@/lib/budget";
-import { db, type Fixed } from "@/lib/db";
+import { db, newId, type Fixed } from "@/lib/db";
 import { useMonth, useMonthData } from "@/lib/hooks";
 import { CURRENCIES, fmt, toCents } from "@/lib/money";
 
@@ -35,7 +36,7 @@ export default function PlanPage() {
     if (Number.isNaN(target)) return "Enter a valid balance";
     const today = isoDate(new Date());
     if (target === left) return;
-    await db.income.add({ title: "Balance correction", amount: target - left, date: today.startsWith(month) ? today : `${month}-01` });
+    await db.income.add({ id: newId(), title: "Balance correction", amount: target - left, date: today.startsWith(month) ? today : `${month}-01` });
     toast.success("Balance saved");
   });
 
@@ -48,16 +49,16 @@ export default function PlanPage() {
     const day = Number(v.get("day"));
     if (!title || !(amount > 0) || !(day >= 1 && day <= 31)) return "Need a title, an amount above 0 and a day 1–31";
     if (editing) await endFixed(editing);
-    await db.fixed.add({ title, amount, day, categoryId: Number(v.get("category")), from: month, until: editing?.until });
+    await db.fixed.add({ id: newId(), title, amount, day, categoryId: String(v.get("category")), from: month, until: editing?.until });
     setEditing(null);
   });
 
   const addCategory = form(async (v) => {
     const name = String(v.get("name")).trim();
-    if (name) await db.categories.add({ name });
+    if (name) await db.categories.add({ id: newId(), name });
   });
 
-  async function removeCategory(id: number) {
+  async function removeCategory(id: string) {
     const used = (await db.fixed.filter((f) => f.categoryId === id).count()) + (await db.expenses.filter((e) => e.categoryId === id).count());
     if (used) return toast.error("Category is in use");
     await db.categories.delete(id);
@@ -174,10 +175,22 @@ export default function PlanPage() {
         </CardContent>
       </Card>
 
+      {process.env.NEXT_PUBLIC_DEXIE_CLOUD_URL && (
+        <Card size="sm">
+          <CardHeader>
+            <CardTitle>Sync</CardTitle>
+            <CardDescription>Sign in with the same email on every device.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Sync />
+          </CardContent>
+        </Card>
+      )}
+
       <Card size="sm">
         <CardHeader>
           <CardTitle>Backup</CardTitle>
-          <CardDescription>Data lives only on this device. Export regularly.</CardDescription>
+          <CardDescription>Export regularly; this is also how you restore.</CardDescription>
         </CardHeader>
         <CardContent>
           <Backup />

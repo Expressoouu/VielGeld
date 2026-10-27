@@ -21,7 +21,7 @@ export function useMonthData(month: string) {
     const all = await db.expenses.toArray(); // small tables; carry-over needs every earlier month
     const allIncome = await db.income.toArray();
     // fixed payments ticked off by hand this month live in settings as "paid:YYYY-MM:<fixedId>"
-    const paid = new Set((await db.settings.where("key").startsWith(`paid:${month}:`).toArray()).map((s) => Number(s.key.split(":")[2])));
+    const paid = new Set((await db.settings.where("key").startsWith(`paid:${month}:`).toArray()).map((s) => s.key.split(":")[2]));
     return {
       currency,
       categories: await db.categories.toArray(),

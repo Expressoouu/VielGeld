@@ -18,8 +18,11 @@ import { Button } from "@/components/ui/button";
 import { isoDate } from "@/lib/budget";
 import { db } from "@/lib/db";
 
+// db.tables also holds Dexie Cloud's internal "$..." tables, which are not ours to export or wipe.
+const tables = () => db.tables.filter((t) => !t.name.startsWith("$"));
+
 async function exportData() {
-  const dump = Object.fromEntries(await Promise.all(db.tables.map(async (t) => [t.name, await t.toArray()])));
+  const dump = Object.fromEntries(await Promise.all(tables().map(async (t) => [t.name, await t.toArray()])));
   const blob = new Blob([JSON.stringify(dump, null, 2)], { type: "application/json" });
   const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(blob), download: `vielgeld-${isoDate(new Date())}.json` });
   a.click();
@@ -30,9 +33,10 @@ async function exportData() {
 async function importData(file: File) {
   const dump = JSON.parse(await file.text());
   // a table missing from the file (e.g. income in a pre-v3 backup) just ends up empty
-  if (!Array.isArray(dump?.expenses) || !db.tables.every((t) => dump?.[t.name] === undefined || Array.isArray(dump[t.name]))) throw new Error("Not a valid backup file");
-  await db.transaction("rw", db.tables, async () => {
-    for (const t of db.tables) {
+  if (!Array.isArray(dump?.expenses) || !tables().every((t) => dump?.[t.name] === undefined || Array.isArray(dump[t.name]))) throw new Error("Not a valid backup file");
+  if (dump.expenses.some((e: { id: unknown }) => typeof e.id !== "string")) throw new Error("Backup is from before sync (numeric ids)");
+  await db.transaction("rw", tables(), async () => {
+    for (const t of tables()) {
       await t.clear();
       await t.bulkAdd(dump[t.name] ?? []);
     }
