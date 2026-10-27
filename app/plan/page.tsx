@@ -58,7 +58,7 @@ export default function PlanPage() {
   });
 
   async function removeCategory(id: number) {
-    const used = (await db.fixed.where({ categoryId: id }).count()) + (await db.expenses.filter((e) => e.categoryId === id).count());
+    const used = (await db.fixed.filter((f) => f.categoryId === id).count()) + (await db.expenses.filter((e) => e.categoryId === id).count());
     if (used) return toast.error("Category is in use");
     await db.categories.delete(id);
   }

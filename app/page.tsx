@@ -64,15 +64,15 @@ export default function MonthPage() {
     <>
       <div className="grid grid-cols-2 gap-3">
         {[
-          ["Income", s.income],
+          ["Current balance", s.remaining],
+          ["Net", s.remaining - s.pendingTotal],
           ["Fixed", s.fixedTotal],
           ["Spent", s.variableTotal],
-          ["Left", s.remaining],
         ].map(([label, v]) => (
           <Card key={label} size="sm">
             <CardContent>
               <div className="text-sm text-muted-foreground">{label}</div>
-              <div className={`text-lg font-semibold ${label === "Left" && s.remaining < 0 ? "text-destructive" : ""}`}>
+              <div className={`text-lg font-semibold ${(v as number) < 0 && label !== "Spent" && label !== "Fixed" ? "text-destructive" : ""}`}>
                 {fmt(v as number)}
               </div>
             </CardContent>
