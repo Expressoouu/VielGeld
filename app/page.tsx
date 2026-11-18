@@ -190,8 +190,11 @@ export default function MonthPage() {
         <CardContent className="space-y-2">
           {[...expenses]
             .sort((a, b) => b.date.localeCompare(a.date))
-            .map((e) => (
-              <div key={e.id} className="flex items-center justify-between gap-2">
+            .map((e, i, arr) => (
+              <div
+                key={e.id}
+                className={`flex items-center justify-between gap-2 ${i > 0 && arr[i - 1].date !== e.date ? "border-t pt-2" : ""}`}
+              >
                 <div className="min-w-0">
                   <div className="truncate">{e.title}</div>
                   <div className="text-xs text-muted-foreground">
