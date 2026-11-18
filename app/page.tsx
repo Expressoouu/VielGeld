@@ -17,6 +17,7 @@ export default function MonthPage() {
   const data = useMonthData(month);
   const [editing, setEditing] = useState<Expense | null>(null);
   const [byCat, setByCat] = useState(false); // flip the Expenses card between the dated list and per-category totals
+  const [openCat, setOpenCat] = useState<string | null>(null); // category expanded in the by-category view
   const [unlocked, setUnlocked] = useState(false); // ticking a payment needs an unlock first, and it re-locks after each tick
   if (!data) return null;
 
@@ -198,9 +199,28 @@ export default function MonthPage() {
         <CardContent className="space-y-2">
           {byCat
             ? [...totals].sort((a, b) => b[1] - a[1]).map(([id, amount]) => (
-                <div key={id} className="flex items-center justify-between gap-2">
-                  <div className="min-w-0 truncate">{name(id)}</div>
-                  <div className="shrink-0">{fmt(amount)}</div>
+                <div key={id}>
+                  <button
+                    type="button"
+                    aria-expanded={openCat === id}
+                    className="flex w-full items-center justify-between gap-2 text-left"
+                    onClick={() => setOpenCat(openCat === id ? null : id)}
+                  >
+                    <span className="min-w-0 truncate">{name(id)}</span>
+                    <span className="shrink-0">{fmt(amount)}</span>
+                  </button>
+                  {openCat === id &&
+                    expenses
+                      .filter((e) => e.categoryId === id)
+                      .sort((a, b) => b.date.localeCompare(a.date))
+                      .map((e) => (
+                        <div key={e.id} className="flex items-center justify-between gap-2 pl-4 pt-1 text-xs text-muted-foreground">
+                          <span className="min-w-0 truncate">
+                            {e.date.slice(8)}. · {e.title}
+                          </span>
+                          <span className="shrink-0">{fmt(e.amount)}</span>
+                        </div>
+                      ))}
                 </div>
               ))
             : [...expenses]
