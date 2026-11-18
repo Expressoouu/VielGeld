@@ -16,6 +16,7 @@ export default function MonthPage() {
   const month = useMonth();
   const data = useMonthData(month);
   const [editing, setEditing] = useState<Expense | null>(null);
+  const [byCat, setByCat] = useState(false); // flip the Expenses card between the dated list and per-category totals
   const [unlocked, setUnlocked] = useState(false); // ticking a payment needs an unlock first, and it re-locks after each tick
   if (!data) return null;
 
@@ -23,6 +24,8 @@ export default function MonthPage() {
   const s = summarize(month, fixed, expenses, income, new Date(), carry, paid);
   const due = fixedFor(fixed, month).sort((a, b) => a.day - b.day);
   const name = (id: string) => categories.find((c) => c.id === id)?.name ?? "?";
+  const totals = new Map<string, number>();
+  for (const e of expenses) totals.set(e.categoryId, (totals.get(e.categoryId) ?? 0) + e.amount);
   const today = isoDate(new Date());
   const defaultDate = today.startsWith(month) ? today : `${month}-01`;
 
@@ -186,9 +189,21 @@ export default function MonthPage() {
       <Card>
         <CardHeader>
           <CardTitle>Expenses</CardTitle>
+          <CardAction>
+            <Button variant="outline" size="sm" onClick={() => setByCat((v) => !v)}>
+              {byCat ? "By date" : "By category"}
+            </Button>
+          </CardAction>
         </CardHeader>
         <CardContent className="space-y-2">
-          {[...expenses]
+          {byCat
+            ? [...totals].sort((a, b) => b[1] - a[1]).map(([id, amount]) => (
+                <div key={id} className="flex items-center justify-between gap-2">
+                  <div className="min-w-0 truncate">{name(id)}</div>
+                  <div className="shrink-0">{fmt(amount)}</div>
+                </div>
+              ))
+            : [...expenses]
             .sort((a, b) => b.date.localeCompare(a.date))
             .map((e, i, arr) => (
               <div
