@@ -193,7 +193,7 @@ export default function MonthPage() {
             .map((e, i, arr) => (
               <div
                 key={e.id}
-                className={`flex items-center justify-between gap-2 ${i > 0 && arr[i - 1].date !== e.date ? "border-t pt-2" : ""}`}
+                className={`flex items-center justify-between gap-2 ${i > 0 && arr[i - 1].date !== e.date ? "border-t border-primary pt-2" : ""}`}
               >
                 <div className="min-w-0">
                   <div className="truncate">{e.title}</div>
